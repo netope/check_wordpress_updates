@@ -1,16 +1,16 @@
 <?php
 
 /*Script name:  generate_motd.sh
-# Version:      v0.04.160306
+# Version:      v1.01.160307
 # Created on:   10/02/2014
 # Author:       Willem D'Haese
-# Purpose:      Bash script that will dynamically generate a message
-#               of they day for users logging in.
+# Purpose:      PHP script which check available updates on Wordpress site
 # On GitHub:    https://github.com/willemdh/check_wordpress_update
 # On OutsideIT: https://outsideit.net/check-wordpress-update
 # Recent History:
 #   05/03/16 => Inital creation
 #   06/03/16 => Better output and logging
+#   07/03/16 => Integrated version in output
 # Copyright:
 # This program is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -23,31 +23,31 @@
 # <http://www.gnu.org/licenses/>.*/
 
 $Verbose = 0;
+$Status = 'UNKNOWN: ';
+$CoreUpdateString = 'Unable to check for Wordpress updates.';
 
 function WriteLog($Log, $Severity, $Msg) {
     global $Verbose;
+    date_default_timezone_set('Europe/Brussels');
     if ($Verbose == 1) {
         $DateTime = date('Y-m-d H:i:s');    
         $MicroTime = round(microtime(true) * 1000);
         list($MicroSec, $Sec) = explode(" ", microtime());
         $FullDateTime = date("Y-m-d H:i:s,",$Sec) . intval(round($MicroSec*1000)) . ' ';
-        $fd = fopen($Log, 'a');
-        date_default_timezone_set('Europe/Brussels');
+        $fd = fopen($Log, 'a'); 
         $FullMessage = $FullDateTime . $Severity . ': ' . $Msg;
         fwrite($fd, $FullMessage . "\n");
         fclose($fd);
     }    
 }
 
-
-$allowed_ips = array('127.0.0.1','212.71.234.84','2a01:7e00::f03c:91ff:fe18:6141');
-$remote_ip = $_SERVER['REMOTE_ADDR'];
-WriteLog('outsideit_Wp.log', 'Info', "Address: $remote_ip");
-if (! in_array($remote_ip, $allowed_ips)) {
-    echo "CRITICAL: IP $remote_ip not allowed.";
+$Allowed = array('127.0.0.1','212.71.234.84','2a01:7e00::f03c:91ff:fe18:6141');
+$FromIp = $_SERVER['REMOTE_ADDR'];
+WriteLog('outsideit_Wp.log', 'Info', "Address: $FromIp");
+if (! in_array($FromIp, $Allowed)) {
+    echo "CRITICAL: IP $FromIp not allowed.";
     exit;
 }
-WriteLog('outsideit_Wp.log', 'Info', "Require wp-load.php");
 require_once('wp-load.php');
 global $wp_version;
 $core_updates = FALSE;
@@ -82,8 +82,11 @@ if ( false === ( $core = get_transient( 'update_core' ) ) ) {
 //        WriteLog('outsideit_Wp.log', 'Info', "Counts: $CountStr");
         foreach ($core->updates as $core_update) {
             if ($core_update->current != $wp_version) {
-                WriteLog('outsideit_Wp.log', 'Info', "Core updates not equal to $wp_version");
                 $counts['core'] = 1;
+                $CoreUpdateString = 'Version: ' . $wp_version . ' (Needs update to ' . $core_update->current . ')';
+            }
+            else {
+                $CoreUpdateString = 'Version: ' . $wp_version . ' (Up to date)';
             }
        }
     }
@@ -98,12 +101,9 @@ if ( false === ( $plugins = get_transient( 'update_plugins' ) ) ) {
         WriteLog('outsideit_Wp.log', 'Info', "Plugin site transient also equals false.");
     }
     else {
-        WriteLog('outsideit_Wp.log', 'Info', "Serializing plugins object.");
-        $pluginstext = serialize($plugins);
-        WriteLog('outsideit_Wp.log', 'Info', "pluginstext: $pluginstext");
+//        $pluginstext = serialize($plugins);
+//        WriteLog('outsideit_Wp.log', 'Info', "pluginstext: $pluginstext");
         $counts['plugins'] = count( $plugins->response );
-        $CountStr = implode(",",$counts);
-        WriteLog('outsideit_Wp.log', 'Info', "Counts: $CountStr");
     }
 }
 else {
@@ -115,29 +115,45 @@ if ( false === ( $themes = get_transient( 'update_themes' ) ) ) {
         WriteLog('outsideit_Wp.log', 'Info', "Theme site transient also equals false.");
     }
     else {
-        WriteLog('outsideit_Wp.log', 'Info', "Serializing plugins object.");
-        $themestext = serialize($themes);
-        WriteLog('outsideit_Wp.log', 'Info', "themestext: $themestext");
+
+//        $themestext = serialize($themes);
+//        WriteLog('outsideit_Wp.log', 'Info', "themestext: $themestext");
         $counts['themes'] = count( $themes->response );
-        $CountStr = implode(",",$counts);
-        WriteLog('outsideit_Wp.log', 'Info', "Counts: $CountStr");
     }
 }
 else {
 
 }
-$status = 'UNKNOWN: ';
+
 if ($counts['core'] >= 1) {
-    $status = 'CRITICAL';
+    $Status = 'CRITICAL';
 }
 elseif ($counts['plugins'] >= 1 || $counts['themes'] >= 1 ) {
-    $status = 'WARNING';
+    $Status = 'WARNING';
+    if ($counts['plugins'] == 1) {
+        $PluginsUpdateString = '1 plugin update available';
+    }
+    elseif ($counts['plugins'] >= 2) {
+        $PluginsUpdateString = $counts['plugins'] . ' plugin updates available';
+    }
+    else {
+        $PluginsUpdateString = 'no plugin updates available';
+    }
+    if ($counts['themes'] == 1) {
+        $ThemesUpdateString = '1 theme update available';
+    }
+    elseif ($counts['themes'] >= 2) {
+        $ThemesUpdateString = $counts['themes'] . ' theme updates available';
+    }
+    else {
+        $ThemesUpdateString = 'no theme updates available';
+    }
 }
 elseif ($counts['plugins'] == 0 && $counts['themes'] == 0 && $counts['core'] == 0) {
-    $status = 'OK';
+    $Status = 'OK';
 }
 else {
-    $status = 'UNKNOWN';
+    $Status = 'UNKNOWN';
 }
-$text = $status . ': ' . $counts['core'] . ' core update. ' . $counts['plugins'] . ' plugin updates. ' . $counts['themes'] . ' theme updates. ';
+$text = $Status . ': ' . $CoreUpdateString . ', ' . $PluginsUpdateString . ', ' . $ThemesUpdateString . '. ';
 echo $text;

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script name:  check_wordpress_updates.sh
-# Version:      v0.04.160306
+# Version:      v1.01.160307
 # Created on:   10/02/2014
 # Author:       Willem D'Haese
 # Purpose:      Checks Wordpress website for updates.
@@ -9,6 +9,7 @@
 # Recent History:
 #   05/03/16 => Inital creation
 #   06/03/16 => Better output and logging
+#   07/03/16 => Better parameters and tests
 # Copyright:
 # This program is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -51,34 +52,48 @@ WriteLog () {
         echo "${Now}: $ScriptName: $2: $3" >> $1
     fi
 }
-CurlPath="$(which curl)"
-CurlOptions='--user-agent check_wordpress_updates.sh'
-WriteLog Verbose Info "Command: $CurlPath -s $1"
-CurlResult="$($CurlPath -s $1)"
-CommandResult=$?
-if [ $CommandResult != 0 ] ; then
-    ReturnString="Problem with curl or ip address in php incorrect. Wesbite: $Website Result: $result"
+
+while :; do
+    case "$1" in
+        -h|--help)
+            DisplayHelp ;;
+        -U|--Url)
+            shift ; Url="$1" ; shift ; ;;
+        -*)
+            echo "you specified a non-existant option. Please debug." ; exit 2 ; ;;
+        *)
+            break ; ;;
+    esac
+done
+
+if [[ -z $Url ]] ; then
+    ReturnString="CRITICAL: Mandatory parameter \"--Url\" is missing."
     Exitcode=2
 else
-    WriteLog Verbose Info "CurlResult: $CurlResult"
-    if [[ ! -z $CurlResult ]] ; then
-        ReturnString=$CurlResult
-        if [[ "$CurlResult" =~ "CRITICAL" ]]; then
-
-            Exitcode=2
-        elif [[ "$CurlResult" =~ "WARNING" ]]; then
-
-            Exitcode=1
-        elif [[ "$CurlResult" =~ "OK" ]]; then        
-
-            Exitcode=0
-        fi
+    CurlPath="$(which curl)"
+    CurlOptions='--user-agent check_wordpress_updates.sh'
+    WriteLog Verbose Info "Command: $CurlPath -s $Url"
+    CurlResult="$($CurlPath -s $Url)"
+    CommandResult=$?
+    if [ $CommandResult != 0 ] ; then
+        ReturnString="CRITICAL: Problem with curl or ip address in php incorrect. Wesbite: $url Result: $CurlResult"
+        Exitcode=2
     else
-        ReturnString="ERROR: Curl Results is empty. Something went wrong."
-        Extcode=2
+        WriteLog Verbose Info "CurlResult: $CurlResult"
+        if [[ ! -z $CurlResult ]] ; then
+            ReturnString=$CurlResult
+            if [[ "$CurlResult" =~ "CRITICAL" ]]; then
+                Exitcode=2
+            elif [[ "$CurlResult" =~ "WARNING" ]]; then
+                Exitcode=1
+            elif [[ "$CurlResult" =~ "OK" ]]; then        
+                Exitcode=0
+            fi
+        else
+            ReturnString="ERROR: Curl Results is empty. Something went wrong."
+            Extcode=2
+        fi
     fi
 fi
 echo $ReturnString
 exit $Exitcode
-
-
