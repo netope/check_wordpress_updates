@@ -1,7 +1,7 @@
 <?php
 
-/*Script name:  generate_motd.sh
-# Version:      v1.01.160307
+/*Script name:  check_wordpress_updates.php
+# Version:      v1.03.160312
 # Created on:   10/02/2014
 # Author:       Willem D'Haese
 # Purpose:      PHP script which check available updates on Wordpress site
@@ -11,6 +11,7 @@
 #   05/03/16 => Inital creation
 #   06/03/16 => Better output and logging
 #   07/03/16 => Integrated version in output
+#   12/03/16 => Fixed theme and ok output
 # Copyright:
 # This program is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -111,7 +112,7 @@ else {
 }
 if ( false === ( $themes = get_transient( 'update_themes' ) ) ) {
     WriteLog('outsideit_Wp.log', 'Info', "Theme transient equals false. Trying site...");
-    if ( false === ( $plugins = get_site_transient( 'update_themes' ) ) ) {
+    if ( false === ( $themes = get_site_transient( 'update_themes' ) ) ) {
         WriteLog('outsideit_Wp.log', 'Info', "Theme site transient also equals false.");
     }
     else {
@@ -124,36 +125,35 @@ if ( false === ( $themes = get_transient( 'update_themes' ) ) ) {
 else {
 
 }
-
 if ($counts['core'] >= 1) {
     $Status = 'CRITICAL';
 }
 elseif ($counts['plugins'] >= 1 || $counts['themes'] >= 1 ) {
     $Status = 'WARNING';
-    if ($counts['plugins'] == 1) {
-        $PluginsUpdateString = '1 plugin update available';
-    }
-    elseif ($counts['plugins'] >= 2) {
-        $PluginsUpdateString = $counts['plugins'] . ' plugin updates available';
-    }
-    else {
-        $PluginsUpdateString = 'no plugin updates available';
-    }
-    if ($counts['themes'] == 1) {
-        $ThemesUpdateString = '1 theme update available';
-    }
-    elseif ($counts['themes'] >= 2) {
-        $ThemesUpdateString = $counts['themes'] . ' theme updates available';
-    }
-    else {
-        $ThemesUpdateString = 'no theme updates available';
-    }
 }
 elseif ($counts['plugins'] == 0 && $counts['themes'] == 0 && $counts['core'] == 0) {
     $Status = 'OK';
 }
 else {
     $Status = 'UNKNOWN';
+}
+if ($counts['plugins'] == 1) {
+    $PluginsUpdateString = '1 plugin update available';
+}
+elseif ($counts['plugins'] >= 2) {
+    $PluginsUpdateString = $counts['plugins'] . ' plugin updates available';
+}
+else {
+    $PluginsUpdateString = 'no plugin updates available';
+}
+if ($counts['themes'] == 1) {
+    $ThemesUpdateString = '1 theme update available';
+}
+elseif ($counts['themes'] >= 2) {
+    $ThemesUpdateString = $counts['themes'] . ' theme updates available';
+}
+else {
+    $ThemesUpdateString = 'no theme updates available';
 }
 $text = $Status . ': ' . $CoreUpdateString . ', ' . $PluginsUpdateString . ', ' . $ThemesUpdateString . '. ';
 echo $text;
