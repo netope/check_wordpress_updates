@@ -5,8 +5,8 @@
 # Created on:   10/02/2014
 # Author:       Willem D'Haese
 # Purpose:      PHP script which check available updates on Wordpress site
-# On GitHub:    https://github.com/willemdh/check_wordpress_update
-# On OutsideIT: https://outsideit.net/check-wordpress-update
+# On GitHub:    https://github.com/willemdh/check_wordpress_updates
+# On OutsideIT: https://outsideit.net/check-wordpress-updates
 # Recent History:
 #   05/03/16 => Inital creation, based on Kong Jin Jie's WP plugin
 #   06/03/16 => Better output and logging
