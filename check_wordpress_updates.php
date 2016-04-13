@@ -1,17 +1,18 @@
 <?php
 
 /*Script name:  check_wordpress_updates.php
-# Version:      v1.03.160312
+# Version:      v1.04.160413
 # Created on:   10/02/2014
 # Author:       Willem D'Haese
 # Purpose:      PHP script which check available updates on Wordpress site
 # On GitHub:    https://github.com/willemdh/check_wordpress_update
 # On OutsideIT: https://outsideit.net/check-wordpress-update
 # Recent History:
-#   05/03/16 => Inital creation
+#   05/03/16 => Inital creation, based on Kong Jin Jie's WP plugin
 #   06/03/16 => Better output and logging
 #   07/03/16 => Integrated version in output
 #   12/03/16 => Fixed theme and ok output
+#   13/04/16 => Cleanup for release, core testing
 # Copyright:
 # This program is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -42,7 +43,7 @@ function WriteLog($Log, $Severity, $Msg) {
     }    
 }
 
-$Allowed = array('127.0.0.1','212.71.234.84','2a01:7e00::f03c:91ff:fe18:6141');
+$Allowed = array('127.0.0.1','xx.xx.xx.xx','xx.xx.xx.xx');
 $FromIp = $_SERVER['REMOTE_ADDR'];
 WriteLog('outsideit_Wp.log', 'Info', "Address: $FromIp");
 if (! in_array($FromIp, $Allowed)) {
@@ -62,25 +63,12 @@ wp_update_themes();
 $counts = array( 'core' => 0, 'plugins' => 0, 'themes' => 0 );
 $CountStr = implode(",",$counts);
 WriteLog('outsideit_Wp.log', 'Info', "Counts: $CountStr");
-// $update_wordpress = get_core_updates( array('dismissed' => false) );
-//if ( ! empty( $update_wordpress ) && ! in_array( $update_wordpress[0]->response, array('development', 'latest') ) ) {
-//   $counts['wordpress'] = 1;
-//}
-//else {
-//    $counts['wordpress'] = 11;
-//}
 if ( false === ( $core = get_transient( 'update_core' ) ) ) {
     WriteLog('outsideit_Wp.log', 'Info', "Core transient equals false. Trying site...");
     if ( false === ( $core = get_site_transient( 'update_core' ) ) ) {
         WriteLog('outsideit_Wp.log', 'Info', "Core site transient also equals false.");
     }
     else {
-//        WriteLog('outsideit_Wp.log', 'Info', "Serializing core object.");
-//        $coretext = serialize($core);
-//        WriteLog('outsideit_Wp.log', 'Info', "coretext: $coretext");
-//        $counts['core'] = count( $core->response );
-//        $CountStr = implode(",",$counts);
-//        WriteLog('outsideit_Wp.log', 'Info', "Counts: $CountStr");
         foreach ($core->updates as $core_update) {
             if ($core_update->current != $wp_version) {
                 $counts['core'] = 1;
@@ -95,15 +83,12 @@ if ( false === ( $core = get_transient( 'update_core' ) ) ) {
 else {
 
 }
-
 if ( false === ( $plugins = get_transient( 'update_plugins' ) ) ) {
     WriteLog('outsideit_Wp.log', 'Info', "Plugin transient equals false. Trying site...");
     if ( false === ( $plugins = get_site_transient( 'update_plugins' ) ) ) {
         WriteLog('outsideit_Wp.log', 'Info', "Plugin site transient also equals false.");
     }
     else {
-//        $pluginstext = serialize($plugins);
-//        WriteLog('outsideit_Wp.log', 'Info', "pluginstext: $pluginstext");
         $counts['plugins'] = count( $plugins->response );
     }
 }
@@ -116,9 +101,6 @@ if ( false === ( $themes = get_transient( 'update_themes' ) ) ) {
         WriteLog('outsideit_Wp.log', 'Info', "Theme site transient also equals false.");
     }
     else {
-
-//        $themestext = serialize($themes);
-//        WriteLog('outsideit_Wp.log', 'Info', "themestext: $themestext");
         $counts['themes'] = count( $themes->response );
     }
 }

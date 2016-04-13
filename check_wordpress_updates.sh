@@ -1,15 +1,16 @@
 #!/bin/bash
 # Script name:  check_wordpress_updates.sh
-# Version:      v1.01.160307
-# Created on:   10/02/2014
+# Version:      v1.04.160413
+# Created on:   10/11/2015
 # Author:       Willem D'Haese
 # Purpose:      Checks Wordpress website for updates.
 # On GitHub:    https://github.com/willemdh/check_wordpress_updates
 # On OutsideIT: https://outsideit.net/check-wordpress-updates
 # Recent History:
-#   05/03/16 => Inital creation
+#   05/03/16 => Inital creation, based on Kong Jin Jie's WP plugin
 #   06/03/16 => Better output and logging
 #   07/03/16 => Better parameters and tests
+#   13/04/16 => Cleanup for release, core testing
 # Copyright:
 # This program is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the Free
@@ -51,6 +52,17 @@ WriteLog () {
     elif [ -f $1 ] ; then
         echo "${Now}: $ScriptName: $2: $3" >> $1
     fi
+}
+
+DisplayHelp ()  {
+    echo "Usage: check_wordpress_updates.sh"
+    echo "1) Add the IP addresses of the Nagios servers that need access to the Allowed array in check_wordpress_updates.php"
+    echo "2) Put check_wordpress_updates.php in the root of you Wordpress installation"
+    echo "3) Put check_wordpress_updates.sh in you nagios plugin folder and call it from Nagios interface"
+    echo "Arguments: "
+    echo "    -h |--help        Displays this help option"
+    echo "    -U |--Url         Mandatory URL on which to check for Wordpress updates"
+    exit 3
 }
 
 while :; do
