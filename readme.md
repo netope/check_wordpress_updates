@@ -11,11 +11,11 @@ pending updates.
 
 ### Status
 
-In development. 
+Production ready. 
 
 ### How To
 
-Please check http://outsideit.net/check-wordpress-updates for more information on how to use this plugin.
+Please check https://outsideit.net/check-wordpress-updates for more information on how to use this plugin.
 
 ### Help
 
