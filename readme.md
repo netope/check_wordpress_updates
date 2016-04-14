@@ -23,7 +23,7 @@ In case you find a bug or have a feature request, please make an issue on GitHub
 
 ### On Nagios Exchange
 
-Not yet.
+https://exchange.nagios.org/directory/Plugins/CMS-and-Blog-Software/Wordpress/Check-Wordpress-Updates/details
 
 ### Copyright
 
