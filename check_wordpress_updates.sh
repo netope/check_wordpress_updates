@@ -83,29 +83,36 @@ if [[ -z $Url ]] ; then
     Exitcode=2
 else
     CurlPath="$(which curl)"
-    CurlOptions='--user-agent check_wordpress_updates.sh'
-    WriteLog Verbose Info "Command: $CurlPath -s $Url"
-    CurlResult="$($CurlPath -s $Url)"
-    CommandResult=$?
-    if [ $CommandResult != 0 ] ; then
-        ReturnString="CRITICAL: Problem with curl or ip address in php incorrect. Wesbite: $url Result: $CurlResult"
-        Exitcode=2
+    if [[ -z $CurlPath ]] ; then
+        ReturnString="ERROR: Curl is not installed"
+        Extcode=2
     else
-        WriteLog Verbose Info "CurlResult: $CurlResult"
-        if [[ ! -z $CurlResult ]] ; then
-            ReturnString=$CurlResult
-            if [[ "$CurlResult" =~ "CRITICAL" ]]; then
-                Exitcode=2
-            elif [[ "$CurlResult" =~ "WARNING" ]]; then
-                Exitcode=1
-            elif [[ "$CurlResult" =~ "OK" ]]; then        
-                Exitcode=0
-            fi
+        CurlOptions='--user-agent check_wordpress_updates.sh'
+        WriteLog Verbose Info "Command: $CurlPath -s $Url"
+        CurlResult="$($CurlPath -s $Url/wp-version.php)"
+        CommandResult=$?
+        if [ $CommandResult != 0 ] ; then
+            ReturnString="CRITICAL: Problem with curl or ip address in php incorrect. Wesbite: $url Result: $CurlResult"
+            Exitcode=2
         else
-            ReturnString="ERROR: Curl Results is empty. Something went wrong."
-            Extcode=2
+            WriteLog Verbose Info "CurlResult: $CurlResult"
+            if [[ ! -z $CurlResult ]] ; then
+                ReturnString=$CurlResult
+                if [[ "$CurlResult" =~ "CRITICAL" ]]; then
+                    Exitcode=2
+                elif [[ "$CurlResult" =~ "WARNING" ]]; then
+                    Exitcode=1
+                elif [[ "$CurlResult" =~ "OK" ]]; then        
+                    Exitcode=0
+                fi
+            else
+                ReturnString="ERROR: Curl Results is empty. Something went wrong."
+                Extcode=2
+            fi
         fi
     fi
 fi
 echo $ReturnString
 exit $Exitcode
+
+
